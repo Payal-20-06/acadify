@@ -19,40 +19,29 @@ export interface LoginResponse {
   refresh_token?: string;
   token_type: string;
 }
-
 const authService = {
-
   async login(data: LoginPayload) {
-    const response =
-      await api.post<LoginResponse>(
-        "/api/v1/auths/login",
-        data
-      );
+    const response = await api.post<LoginResponse>(
+      "/api/v1/auths/login",
+      data
+    );
 
     return response.data;
   },
 
-  async register(
-    data: RegisterPayload
-  ) {
-    const response =
-      await api.post(
-        "/api/v1/auths/signup",
-        data
-      );
+  async register(data: RegisterPayload) {
+    const response = await api.post(
+      "/api/v1/auths/signup",
+      data
+    );
 
     return response.data;
   },
 
   async getCurrentUser() {
-    const response =
-      await api.get(
-        "/api/v1/users/me"
-      );
-
+    const response = await api.get("/api/v1/auths/me");
     return response.data;
   },
-
 };
 
 export default authService;

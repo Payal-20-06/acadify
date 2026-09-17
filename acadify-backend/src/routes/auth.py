@@ -6,6 +6,7 @@ from src.core.permissions import RoleChecker
 from src.db.main import get_session
 from src.repositories.user_repository import UserRepository
 
+
 from src.services.auth_service import AuthService
 from src.schemas.auth import (
     SignupRequest,
@@ -14,20 +15,13 @@ from src.schemas.auth import (
     TokenResponse,
     RefreshTokenRequest,
 )
-
-
+from src.services.email_service import send_verification_email
 
 router = APIRouter(
     prefix="/api/v1/auths",
     tags=["Authentication"],
 )
 
-
-@router.post(
-    "/signup",
-    response_model=UserResponse,
-    status_code=status.HTTP_201_CREATED,
-)
 @router.post(
     "/signup",
     status_code=status.HTTP_201_CREATED
@@ -40,8 +34,16 @@ async def signup(
     auth_service = AuthService(user_repository)
 
     user, verification_token = await auth_service.signup(data)
+    print("USER EMAIL:", user.email)
+    print("SENDING VERIFICATION EMAIL TO:", user.email)
+
+    await send_verification_email(
+        user.email,
+        verification_token,
+    )
 
     return {
+        "message": "Account created successfully. Please check your email to verify your account.",
         "user": {
             "uid": str(user.uid),
             "username": user.username,
@@ -52,18 +54,7 @@ async def signup(
             "role": user.role,
             "is_verified": user.is_verified,
         },
-        "verification_token": verification_token,
     }
-
-    # return UserResponse(
-    #     uid=str(user.uid),
-    #     username=user.username,
-    #     email=user.email,
-    #     first_name=user.first_name,
-    #     last_name=user.last_name,
-    #     role=user.role,
-    #     is_verified=user.is_verified,
-    # )
 @router.post(
     "/login",
     response_model=TokenResponse,

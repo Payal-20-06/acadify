@@ -12,6 +12,14 @@ from src.core.security import (
 )
 from src.schemas.auth import SignupRequest, LoginRequest
 
+from src.core.exceptions import (
+    InvalidCredentials,
+    EmailAlreadyRegistered,
+    PhoneAlreadyRegistered,
+    UsernameAlreadyExists,
+    InvalidVerificationToken,
+    InvalidRefreshToken,
+)
 
 class AuthService:
 
@@ -25,14 +33,14 @@ class AuthService:
         )
 
         if existing_email:
-            raise ValueError("Email already registered")
+             raise EmailAlreadyRegistered()
 
         existing_phone = await self.user_repository.get_by_phone(
             data.phone
         )
 
         if existing_phone:
-            raise ValueError("Phone number already registered")
+            raise PhoneAlreadyRegistered()
 
         name_parts = data.full_name.strip().split()
 
@@ -50,7 +58,7 @@ class AuthService:
         )
 
         if existing_username:
-            raise ValueError("Username already exists")
+            raise UsernameAlreadyExists()
 
         hashed_password = hash_password(data.password)
 
@@ -85,9 +93,7 @@ class AuthService:
 
         # 2. Check user exists
         if not user:
-            raise ValueError(
-                "Invalid email or password"
-            )
+            raise InvalidCredentials()
 
         # 3. Verify password
         password_valid = verify_password(
@@ -96,9 +102,7 @@ class AuthService:
         )
 
         if not password_valid:
-            raise ValueError(
-                "Invalid email or password"
-            )
+            raise InvalidCredentials()
 
         # 4. Create access token
         access_token = create_access_token(
@@ -127,17 +131,13 @@ class AuthService:
 
         # 2. Make sure it is actually a refresh token
         if payload.get("type") != "refresh":
-            raise ValueError(
-                "Invalid refresh token"
-            )
+            raise InvalidRefreshToken()
 
         # 3. Get user ID
         user_id = payload.get("sub")
 
         if not user_id:
-            raise ValueError(
-                "Invalid refresh token"
-            )
+            raise InvalidRefreshToken()
 
         # 4. Create a new access token
         access_token = create_access_token(
@@ -158,23 +158,17 @@ class AuthService:
             payload = decode_token(token)
 
         except Exception:
-            raise ValueError(
-                "Invalid or expired verification token"
-            )
+            raise InvalidVerificationToken()
 
         # Check token type
         if payload.get("type") != "email_verification":
-            raise ValueError(
-                "Invalid verification token"
-            )
+            raise InvalidVerificationToken()
 
         # Get user ID
         user_id = payload.get("sub")
 
         if not user_id:
-            raise ValueError(
-                "Invalid verification token"
-            )
+            raise InvalidVerificationToken()
 
         # Find user
         user = await self.user_repository.get_by_uid(
@@ -182,9 +176,7 @@ class AuthService:
         )
 
         if not user:
-            raise ValueError(
-                "User not found"
-            )
+            raise InvalidVerificationToken()
 
         # Already verified
         if user.is_verified:
