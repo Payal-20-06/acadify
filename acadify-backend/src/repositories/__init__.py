@@ -1,0 +1,9 @@
+from src.repositories.student_repository import StudentRepository
+from src.repositories.enrollment_repository import EnrollmentRepository
+
+from src.repositories.attendance_repository import AttendanceRepository
+
+from src.repositories.marks_repository import MarksRepository
+from src.repositories.schedule_repository import ScheduleRepository
+
+from src.repositories.announcement_repository import AnnouncementRepository

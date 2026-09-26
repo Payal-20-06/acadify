@@ -55,4 +55,18 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
 
 class RefreshTokenRequest(BaseModel):
-    refresh_token: str    
+    refresh_token: str
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str = Field(min_length=8)
+    confirm_password: str = Field(min_length=8)
+
+    @model_validator(mode="after")
+    def validate_passwords(self):
+        if self.new_password != self.confirm_password:
+            raise ValueError("Passwords do not match")
+        return self

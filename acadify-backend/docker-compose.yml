@@ -1,0 +1,42 @@
+services:
+
+  api:
+    build: .
+    container_name: acadify_api
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env.docker
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:16
+    container_name: acadify_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: acadify
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    container_name: acadify_redis
+    ports:
+      - "6380:6379"
+  celery_worker:
+    build: .
+    container_name: acadify_celery
+    command: celery -A src.worker.celery_app.celery_app worker --loglevel=info
+    env_file:
+      - .env.docker
+    depends_on:
+      - redis
+      - postgres
+
+volumes:
+  postgres_data:

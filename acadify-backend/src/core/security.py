@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-
+from uuid import uuid4
 import jwt
 from pwdlib import PasswordHash
 
@@ -23,7 +23,7 @@ def verify_password(
     )
 
 
-def create_access_token(user_id: str) -> str:
+def create_access_token(user_id: str, session_id: str) -> str:
     expire = datetime.now(timezone.utc) + timedelta(
         minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
     )
@@ -31,6 +31,8 @@ def create_access_token(user_id: str) -> str:
     payload = {
         "sub": user_id,
         "type": "access",
+        "jti": str(uuid4()),
+        "sid": session_id,
         "exp": expire,
     }
 
@@ -41,7 +43,7 @@ def create_access_token(user_id: str) -> str:
     )
 
 
-def create_refresh_token(user_id: str) -> str:
+def create_refresh_token(user_id: str, session_id: str) -> str:
     expire = datetime.now(timezone.utc) + timedelta(
         days=settings.REFRESH_TOKEN_EXPIRE_DAYS
     )
@@ -49,6 +51,8 @@ def create_refresh_token(user_id: str) -> str:
     payload = {
         "sub": user_id,
         "type": "refresh",
+        "sid": session_id,
+        "jti": str(uuid4()),
         "exp": expire,
     }
 
@@ -77,6 +81,23 @@ def create_email_verification_token(
     payload = {
         "sub": user_id,
         "type": "email_verification",
+        "exp": expire,
+    }
+
+    return jwt.encode(
+        payload,
+        settings.JWT_SECRET,
+        algorithm=settings.JWT_ALGORITHM,
+    )
+
+def create_password_reset_token(user_id: str) -> str:
+    expire = datetime.now(timezone.utc) + timedelta(
+        minutes=settings.PASSWORD_RESET_EXPIRE_MINUTES
+    )
+
+    payload = {
+        "sub": user_id,
+        "type": "password_reset",
         "exp": expire,
     }
 
